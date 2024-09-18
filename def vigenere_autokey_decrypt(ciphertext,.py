@@ -1,26 +1,51 @@
+import string
+
+# Function to decrypt the ciphertext using the guessed primer
 def vigenere_autokey_decrypt(ciphertext, primer):
     alphabet = 'abcdefghijklmnopqrstuvwxyz'
     decrypted_text = ''
     key = primer
-    index = 0
-
-    print("the inde"+alphabet.index(1))
-
-    for char in ciphertext:
-        if char.lower() in alphabet:
-            shift = alphabet.index(key[index].lower())
-            decrypted_char = alphabet[(alphabet.index(char.lower()) - shift) % 26]
-            decrypted_text += decrypted_char
-            key += decrypted_char  # Extend the key with the decrypted character
-            index += 1
-        else:
-            decrypted_text += char  # Non-alphabet characters are added as is
+    idx = 0
     
+    for char in ciphertext:
+        if char.isalpha():
+            shift = alphabet.index(key[idx % len(key)])
+            original_index = (alphabet.index(char.lower()) - shift) % 26
+            decrypted_char = alphabet[original_index]
+            decrypted_text += decrypted_char
+            key += decrypted_char  # Autokey mode appends plaintext to the key
+            idx += 1
+        else:
+            decrypted_text += char  # Preserve non-alphabet characters
+            
     return decrypted_text
 
-ciphertext = "Bimx or lvds'x qinpmwea llv twogpt avd omz ucw zhnzbqi hze bpvga vssq axyi rk wlgvskm yjif ldlc ttci sv. -Tcsgpl Lrusgr."
-# Testing multiple primers
-common_primers = ["example", "cipher", "decode", "attack","pizza"]  # Add more potential primers
-for primer in common_primers:
-    plaintext = vigenere_autokey_decrypt(ciphertext, primer)
-    print(f"Primer: {primer} -> Decrypted text: {plaintext[:100]}...")
+# Brute force attempt to guess the primer
+def brute_force_decrypt(ciphertext):
+    # Load a list of common English words (from a text file)
+    with open('common_english_words.txt', 'r') as f:
+        english_words = [word.strip().lower() for word in f]
+
+    for primer in english_words:
+        decrypted_text = vigenere_autokey_decrypt(ciphertext, primer)
+        if is_plausible_english(decrypted_text):
+            return decrypted_text, primer
+
+    return "No valid plaintext found.", None
+
+# Check if the decrypted text looks like English
+def is_plausible_english(text):
+    common_words = ['the', 'and', 'to', 'of', 'a', 'in', 'that', 'is', 'it', 'was','are','not','do','did','were']  # Common English words
+    word_count = 0
+    words = text.split()
+    for word in words:
+        if word in common_words:
+            word_count += 1
+    # If more than 20% of the words are common English words, it's plausible English
+    return word_count > len(words) * 0.2
+
+ciphertext = "Bimx or lvds'x qinpmwea llv twogpt avd omz ucw zhnzbqi hze bpvga vssq axyi rk wlgvskm yjif ldlc ttci sv."
+decrypted_text, primer = brute_force_decrypt(ciphertext)
+
+print("Decrypted Text:", decrypted_text)
+print("Primer:", primer)
